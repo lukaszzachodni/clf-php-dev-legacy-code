@@ -148,35 +148,31 @@ window.onload = function()
     // ZAZNACZ WIELE LEADOW I WYŚWIETL FORMULARZ
     $(document).on('click','.btn-add-task-to-many',function(e)
     {
-        $(document).on('click','.btn-add-task-to-many',function(e)
-        {
-            e.preventDefault();
-            var grupa_leadow = $(this).parents('.grupa-leadow');
-            let iloscWierszy = $(this)[0].getAttribute('data-ile');
-            if (iloscWierszy == 0) {
-                var checkboxyDoOdznaczenia = $('input[data-klient-id]', grupa_leadow);
-                checkboxyDoOdznaczenia.each(function (){
-                    $(this)[0].checked = false;
-                })
+        e.preventDefault();
+        var grupa_leadow = $(this).parents('.grupa-leadow');
+        let iloscWierszy = $(this)[0].getAttribute('data-ile');
+        if (iloscWierszy == 0) {
+            var checkboxyDoOdznaczenia = $('input[data-klient-id]', grupa_leadow);
+            checkboxyDoOdznaczenia.each(function (){
+                $(this)[0].checked = false;
+            })
+        } else {
+            var wiersze = $('tbody tr', grupa_leadow).slice(0, iloscWierszy);
+            var checkboxyDoZaznaczenia = $('input[data-klient-id]', wiersze);
+            checkboxyDoZaznaczenia.each(function (){
+                $(this)[0].checked = true;
+            })
+            if (wiersze.length) {
+                wiersze.each(function () {
+                    $('#czarne-tlo-przydziel-zadanie-form').show();
+                    $('#czarne-tlo-przydziel-zadanie-form input[name="grupa_leadow"]').val($(grupa_leadow).attr('id'));
+                });
             } else {
-                var wiersze = $('tbody tr', grupa_leadow).slice(0, iloscWierszy);
-                var checkboxyDoZaznaczenia = $('input[data-klient-id]', wiersze);
-                checkboxyDoZaznaczenia.each(function (){
-                    $(this)[0].checked = true;
-                })
-                if (wiersze.length) {
-                    wiersze.each(function () {
-                        $('#czarne-tlo-przydziel-zadanie-form').show();
-                        $('#czarne-tlo-przydziel-zadanie-form input[name="grupa_leadow"]').val($(grupa_leadow).attr('id'));
-                    });
-                } else {
-                    bootbox.alert('Brak leadów do dodania.');
-                    return false;
-                }
+                bootbox.alert('Brak leadów do dodania.');
+                return false;
             }
-        });
+        }
     });
-    
 
     //ładne formatowanie tabeli
     $('.tabela-leadow').DataTable({
@@ -203,7 +199,6 @@ window.onload = function()
             return false;
         }
     });
-
 
     $(document).on('submit','#przydziel-zadanie-form',function(e)
     {
@@ -259,13 +254,9 @@ window.onload = function()
             return false;
         }
     });
-    
 
     $(document).ready(pokaz_leady());
-    
 };
-
-
 
 function  pokaz_leady(){
     $.ajax({
