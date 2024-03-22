@@ -66,7 +66,11 @@ SELECT ss.klient_id FROM `szanseSprzedazy` ss WHERE ss.id_procesu IN (40,50,53,6
     AND ss.status IN('przegrana') AND ss.data_zakonczenia > date_sub(curdate(),interval 1 MONTH)	
 UNION 
 SELECT z.klient_id FROM zamowienia z JOIN faktury f ON f.id_zamowienia = z.id WHERE z.status IN('do opłacenia') AND z.zaplacone = 'nie' AND f.rodzaj_faktury = 'VAT'
-	AND DATE_ADD(f.data_wystawienia,INTERVAL f.termin DAY) < CURDATE() GROUP BY z.klient_id HAVING COUNT(*) > 2;
+	AND DATE_ADD(f.data_wystawienia,INTERVAL f.termin DAY) < CURDATE()
+UNION
+SELECT ss.klient_id FROM `szanseSprzedazy` ss WHERE ss.id_procesu = 62 
+                                                AND (ss.status NOT IN ('otwarta') OR (ss.status NOT IN ('przegrana') AND ss.data_zakonczenia > date_sub(curdate(), interval 1 MONTH)))
+GROUP BY z.klient_id HAVING COUNT(*) > 2;
 
 -- wykluczamy też duplikaty klientow
 DROP TEMPORARY TABLE IF EXISTS __wykluczenia1;
@@ -84,35 +88,35 @@ UNION SELECT klient_id FROM __wykluczenia1
 UNION SELECT klient_id FROM __wykluczenia2;
 
 
-SELECT k.id, k.imie, k.nazwisko, k.email, k.telefon, k.level
-FROM `klienci` k 
-JOIN uczestnicyProgramu u ON u.klient_id = k.id
-JOIN (
-    SELECT uczestnik_id, MAX(produkt_id) as max 
-    FROM `uczestnicyProgramuProdukty` t1 
-    WHERE t1.status = 'wyslane' 
-    GROUP BY uczestnik_id 
+SELECT k.id, k.imie, k.nazwisko, k.email, k.telefon, k.level, t2.max AS ostatnia_lekcja
+FROM `klienci` k
+         JOIN uczestnicyProgramu u ON u.klient_id = k.id
+         JOIN (
+    SELECT uczestnik_id, MAX(produkt_id) as max
+    FROM `uczestnicyProgramuProdukty` t1
+    WHERE t1.status = 'wyslane'
+    GROUP BY uczestnik_id
     HAVING max=118
 ) AS t2 ON t2.uczestnik_id = u.uczestnik_id
 WHERE
-    k.level = 'uczestnik' 
-    AND k.status = 'aktywny'
-    AND NOT EXISTS(SELECT 1 FROM __wykluczenia w WHERE w.klient_id = k.id);
-    
-SELECT k.id, k.imie, k.nazwisko, k.email, k.telefon, k.level
-FROM `klienci` k 
-JOIN uczestnicyProgramu u ON u.klient_id = k.id
-JOIN (
-    SELECT uczestnik_id, MAX(produkt_id) as max 
-    FROM `uczestnicyProgramuProdukty` t1 
-    WHERE t1.status = 'wyslane' 
-    GROUP BY uczestnik_id 
+    k.level = 'uczestnik'
+  AND k.status = 'aktywny'
+  AND NOT EXISTS(SELECT 1 FROM __wykluczenia w WHERE w.klient_id = k.id);
+
+SELECT k.id, k.imie, k.nazwisko, k.email, k.telefon, k.level, t2.max AS ostatnia_lekcja
+FROM `klienci` k
+         JOIN uczestnicyProgramu u ON u.klient_id = k.id
+         JOIN (
+    SELECT uczestnik_id, MAX(produkt_id) as max
+    FROM `uczestnicyProgramuProdukty` t1
+    WHERE t1.status = 'wyslane'
+    GROUP BY uczestnik_id
     HAVING max>118
 ) AS t2 ON t2.uczestnik_id = u.uczestnik_id
 WHERE
-    k.level = 'uczestnik' 
-    AND k.status = 'aktywny'
-    AND NOT EXISTS(SELECT 1 FROM __wykluczenia w WHERE w.klient_id = k.id);
+    k.level = 'uczestnik'
+  AND k.status = 'aktywny'
+  AND NOT EXISTS(SELECT 1 FROM __wykluczenia w WHERE w.klient_id = k.id);
     ";
 
     $result = mysqli_multi_query($link, $query);
@@ -131,7 +135,8 @@ WHERE
                     'klient'    => $w['imie'] . ' ' . $w['nazwisko'],
                     'telefon'   => $w['telefon'],
                     'email'     => $w['email'],
-                    'level'     => $w['level']
+                    'level'     => $w['level'],
+                    'ostatnia_lekcja'     => $w['ostatnia_lekcja']
                 );
             }
             $result->free();
