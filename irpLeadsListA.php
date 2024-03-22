@@ -32,11 +32,11 @@ for ($i = 0; $i < 9; $i++) {
 
     $kolejny_poniedzialek = strtotime('next Monday',$poprzedni_poniedzialek);
     $kolejna_niedziela    = strtotime('next Sunday',$kolejny_poniedzialek);
-    $wypisz_tygodnie .= '<option value="'.$kolejny_poniedzialek.'">od '.date('d-m',$kolejny_poniedzialek).' do '.date('d-m',$kolejna_niedziela).'</option>';    
+    $wypisz_tygodnie .= '<option value="'.$kolejny_poniedzialek.'">od '.date('d-m',$kolejny_poniedzialek).' do '.date('d-m',$kolejna_niedziela).'</option>';
     $poprzedni_poniedzialek = $kolejny_poniedzialek;
 }
-    
- 
+
+
 // HTML
 breadcrumb();
 alert($alert); ?>
@@ -53,7 +53,7 @@ alert($alert); ?>
                 <button class="btn btn-primary btn-add-task-to-many" data-ile="5">5 osób</button>
                 <button class="btn btn-primary btn-add-task-to-many" data-ile="10">10 osób</button>
                 <button class="btn btn-primary btn-add-task-to-checked">Tylko zaznaczone</button>
-                <button class="btn btn-warning btn-add-task-to-many" data-ile="0">Odznacz</button>
+                <button class="btn btn-warning btn-mark-all-unchecked">Odznacz</button>
             </span>
         </div>
         <div>
@@ -72,8 +72,8 @@ alert($alert); ?>
             </table>
         </div>
     </div>
-    
-    
+
+
     <div id="leady-1" class="grupa-leadow">
         <h2>SEGMENT I: Od 4 lekcji PR + Klub</h2>
         <div class="input-group" style="display: inline-block;">
@@ -82,7 +82,7 @@ alert($alert); ?>
                 <button class="btn btn-primary btn-add-task-to-many" data-ile="5">5 osób</button>
                 <button class="btn btn-primary btn-add-task-to-many" data-ile="10">10 osób</button>
                 <button class="btn btn-primary btn-add-task-to-checked">Tylko zaznaczone</button>
-                <button class="btn btn-warning btn-add-task-to-many" data-ile="0">Odznacz</button>
+                <button class="btn btn-warning btn-mark-all-unchecked">Odznacz</button>
             </span>
         </div>
         <div>
@@ -130,7 +130,7 @@ alert($alert); ?>
                     <label for="edytuj-termin-input">Wybierz termin*</label>
                     <select id="edytuj-termin-input" class="form-control" name="tydzien">
                         <?=$wypisz_tygodnie?>
-                    </select>                    
+                    </select>
                 </div>
                 <div><!-- PRZYCISKI ZAPISZ/ANULUJ -->
                     <button type="button" class="btn btn-md btn-warning btn-zamknij-light-box">Anuluj <span class="glyphicon glyphicon-remove"></span></button>
@@ -148,35 +148,25 @@ window.onload = function()
     // ZAZNACZ WIELE LEADOW I WYŚWIETL FORMULARZ
     $(document).on('click','.btn-add-task-to-many',function(e)
     {
-        $(document).on('click','.btn-add-task-to-many',function(e)
-        {
-            e.preventDefault();
-            var grupa_leadow = $(this).parents('.grupa-leadow');
-            let iloscWierszy = $(this)[0].getAttribute('data-ile');
-            if (iloscWierszy == 0) {
-                var checkboxyDoOdznaczenia = $('input[data-klient-id]', grupa_leadow);
-                checkboxyDoOdznaczenia.each(function (){
-                    $(this)[0].checked = false;
-                })
-            } else {
-                var wiersze = $('tbody tr', grupa_leadow).slice(0, iloscWierszy);
-                var checkboxyDoZaznaczenia = $('input[data-klient-id]', wiersze);
-                checkboxyDoZaznaczenia.each(function (){
-                    $(this)[0].checked = true;
-                })
-                if (wiersze.length) {
-                    wiersze.each(function () {
-                        $('#czarne-tlo-przydziel-zadanie-form').show();
-                        $('#czarne-tlo-przydziel-zadanie-form input[name="grupa_leadow"]').val($(grupa_leadow).attr('id'));
-                    });
-                } else {
-                    bootbox.alert('Brak leadów do dodania.');
-                    return false;
-                }
-            }
-        });
+        e.preventDefault();
+        var grupa_leadow = $(this).parents('.grupa-leadow');
+        let iloscWierszy = $(this)[0].getAttribute('data-ile');
+        var wiersze = $('tbody tr', grupa_leadow).slice(0, iloscWierszy);
+        var checkboxyDoZaznaczenia = $('input[data-klient-id]', wiersze);
+        checkboxyDoZaznaczenia.each(function (){
+            $(this)[0].checked = true;
+        })
+        if (wiersze.length) {
+            wiersze.each(function () {
+                $('#czarne-tlo-przydziel-zadanie-form').show();
+                $('#czarne-tlo-przydziel-zadanie-form input[name="grupa_leadow"]').val($(grupa_leadow).attr('id'));
+            });
+        } else {
+            bootbox.alert('Brak leadów do dodania.');
+            return false;
+        }
     });
-    
+
 
     //ładne formatowanie tabeli
     $('.tabela-leadow').DataTable({
@@ -186,7 +176,7 @@ window.onload = function()
         "language": {"url": "//cdn.datatables.net/plug-ins/1.10.7/i18n/Polish.json"},
         fnDrawCallback: function(){$("[data-toggle='tooltip']",this.fnGetNodes()).tooltip({"delay": 0,"track": true,"fade": 250});}
     });
-    
+
     // WYŚWIETL FORMULARZ TYLKO DLA ZAZNACZONYCH
     $(document).on('click','.btn-add-task-to-checked',function(e)
     {
@@ -204,17 +194,27 @@ window.onload = function()
         }
     });
 
+    // ODZNACZ CHECKBOXY
+    $(document).on('click','.btn-mark-all-unchecked',function(e)
+    {
+        e.preventDefault();
+        var grupa_leadow = $(this).parents('.grupa-leadow');
+        var checkboxyDoOdznaczenia = $('input[data-klient-id]', grupa_leadow);
+        checkboxyDoOdznaczenia.each(function (){
+            $(this)[0].checked = false;
+        })
+    });
 
     $(document).on('submit','#przydziel-zadanie-form',function(e)
     {
         e.preventDefault();
-       
+
         var czy_pusta = $('#edytuj-termin-input').val().trim()==='' || $('#edytuj-pracownika-input').val().trim()==='';
         if(czy_pusta){
             bootbox.alert("Uzupełnij wszystkie wymagane pola.");
             return false;
         }
-        
+
         var tydzien= $('#edytuj-termin-input').val();
         var pracownik= $('#edytuj-pracownika-input').val();
         var grupa_leadow = $('#'+$('#czarne-tlo-przydziel-zadanie-form input[name="grupa_leadow"]').val());
@@ -259,10 +259,10 @@ window.onload = function()
             return false;
         }
     });
-    
+
 
     $(document).ready(pokaz_leady());
-    
+
 };
 
 
@@ -292,13 +292,13 @@ function  pokaz_leady(){
                     var level = v.level === 'klient' ? '<span class="label label-primary">KLIENT</span>' : '<span class="label label-success">UCZESTNIK</span>';
                     if(typeof v.ostatnia_lekcja === 'undefined' || v.ostatnia_lekcja === null){v.ostatnia_lekcja='brak';}
                     var rowNode = table.row.add( [
-                        '<a href="/klientKarta&id='+v.klient_id+'" target="_blank">'+v.klient+'&nbsp;<small><span class="glyphicon glyphicon-new-window"></span></small></a>', 
+                        '<a href="/klientKarta&id='+v.klient_id+'" target="_blank">'+v.klient+'&nbsp;<small><span class="glyphicon glyphicon-new-window"></span></small></a>',
                         d4,
                         v.email,
                         level,
                         v.ostatnia_lekcja,
                         '<input data-klient-id="'+v.klient_id+'" type="checkbox">'
-                    ] 
+                    ]
                     ).node();
                     $(rowNode).attr('id','klient-'+v.klient_id+'-row');
                     $('td:eq(4),td:eq(5)',rowNode).addClass( 'text-center');
